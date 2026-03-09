@@ -1,15 +1,94 @@
+* {
+    box-sizing: border-box;
+}
+
 body {
-    font-family: 'Inter', 'Segoe UI', sans-serif;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
     height: 100vh;
     margin: 0;
     background-color: #1e1e2e;
+    /* Sleek dark mode background for chrome */
     color: #cdd6f4;
+    overflow: hidden;
+    /* Prevent body scroll, let webview scroll */
 }
 
-h1 {
-    color: #89b4fa;
+/* Browser Navigation Bar (Chrome) */
+#browser-chrome {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    background-color: #181825;
+    border-bottom: 1px solid #313244;
+    height: 56px;
+    gap: 12px;
+}
+
+/* Navigation Controls (Back, Forward, Reload) */
+#nav-controls {
+    display: flex;
+    gap: 8px;
+}
+
+#nav-controls button {
+    background: transparent;
+    border: none;
+    color: #cdd6f4;
+    cursor: pointer;
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+#nav-controls button:hover {
+    background-color: #313244;
+}
+
+#nav-controls button:active {
+    transform: scale(0.95);
+}
+
+#nav-controls button svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Address Bar */
+#address-bar-container {
+    flex-grow: 1;
+    display: flex;
+}
+
+#url-input {
+    width: 100%;
+    padding: 10px 16px;
+    border-radius: 20px;
+    border: 1px solid #45475a;
+    background-color: #11111b;
+    color: #cdd6f4;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#url-input:focus {
+    border-color: #89b4fa;
+    /* Accent color on focus */
+    box-shadow: 0 0 0 3px rgba(137, 180, 250, 0.2);
+}
+
+/* Webview Container */
+#webview {
+    flex-grow: 1;
+    display: flex;
+    width: 100%;
+    height: calc(100vh - 56px);
+    /* subtract chrome height */
+    background-color: #ffffff;
+    /* Default background for web pages */
 }

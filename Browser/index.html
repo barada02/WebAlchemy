@@ -1,13 +1,45 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>WebAlchemy Browser</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-    <h1>Browser Development Phase 1</h1>
-    <p>Electron environment is successfully set up!</p>
+    <div id="browser-chrome">
+        <div id="nav-controls">
+            <button id="btn-back" title="Go Back">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+            </button>
+            <button id="btn-forward" title="Go Forward">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </button>
+            <button id="btn-reload" title="Reload">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+            </button>
+        </div>
+        <div id="address-bar-container">
+            <input type="text" id="url-input" placeholder="Enter a URL (e.g., https://google.com)" spellcheck="false"
+                autocomplete="off">
+        </div>
+    </div>
+    <webview id="webview" src="https://google.com" allowpopups></webview>
     <script src="renderer.js"></script>
 </body>
+
 </html>
