@@ -47,7 +47,8 @@ async def start_gemini_session(websocket):
     print(f"Connecting to Gemini Live API ({MODEL})...")
     
     # Configure the connection to enable multimodal IO
-    config = {"response_modalities": ["TEXT"]}
+    # The native audio models strictly require "AUDIO" to be in the requested response modalities
+    config = {"response_modalities": ["AUDIO"]}
     
     try:
         # Open the Gemini Live Session
