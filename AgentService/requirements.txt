@@ -1,0 +1,4 @@
+websockets==12.0
+asyncio
+python-dotenv
+google-genai
