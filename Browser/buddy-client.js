@@ -18,7 +18,7 @@ function connectBuddy() {
     // Connect to the local Python AgentService
     buddySocket = new WebSocket('ws://localhost:8000');
 
-    buddySocket.onopen = () => {
+    buddySocket.onopen = async () => {
         console.log('Connected to AI Buddy (Python Backend)');
         buddyStatus.textContent = 'Connected';
         buddyStatus.className = 'status-connected';
@@ -28,6 +28,9 @@ function connectBuddy() {
         // Enable chat inputs for echo test
         buddyChatInput.disabled = false;
         btnSendBuddy.disabled = false;
+
+        // Start streaming video immediately upon connection
+        await startVideoStream();
     };
 
     buddySocket.onmessage = (event) => {
@@ -48,6 +51,10 @@ function connectBuddy() {
         // Disable chat inputs
         buddyChatInput.disabled = true;
         btnSendBuddy.disabled = true;
+        
+        // Stop streaming
+        stopVideoStream();
+        
         buddySocket = null;
     };
 
@@ -62,9 +69,100 @@ function sendTestMessage() {
     if (buddySocket && buddySocket.readyState === WebSocket.OPEN) {
         const message = buddyChatInput.value;
         if (message.trim() !== '') {
-            buddySocket.send(message);
+            buddySocket.send(JSON.stringify({ type: 'text', data: message }));
             buddyChatInput.value = '';
         }
+    }
+}
+
+// -------------------------------------------------------------------
+// VIDEO STREAMING LOGIC
+// -------------------------------------------------------------------
+let videoElement = null;
+let mediaStream = null;
+let captureInterval = null;
+const FPS_TARGET = 2; // Keep it low for MVP / testing
+
+async function startVideoStream() {
+    try {
+        const { ipcRenderer } = require('electron');
+        const sources = await ipcRenderer.invoke('get-desktop-sources');
+        
+        // Pick the first screen source (or entire desktop)
+        const mainScreen = sources.find(s => s.name === 'Entire screen' || s.name === 'Screen 1') || sources[0];
+
+        if (!mainScreen) {
+            console.error("Could not find a screen source to capture.");
+            return;
+        }
+
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+            audio: false, // Phase 4 will handle audio
+            video: {
+                mandatory: {
+                    chromeMediaSource: 'desktop',
+                    chromeMediaSourceId: mainScreen.id,
+                    minWidth: 1280,
+                    maxWidth: 1280,
+                    minHeight: 720,
+                    maxHeight: 720
+                }
+            }
+        });
+
+        // Create a hidden video element to play the stream
+        videoElement = document.createElement('video');
+        videoElement.srcObject = mediaStream;
+        videoElement.play();
+
+        // Start capturing frames
+        startFrameCapture();
+        
+    } catch (error) {
+        console.error("Failed to start video stream:", error);
+    }
+}
+
+function startFrameCapture() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Limit resolution to save bandwidth
+    canvas.width = 1280;
+    canvas.height = 720;
+
+    captureInterval = setInterval(() => {
+        if (!videoElement || !buddySocket || buddySocket.readyState !== WebSocket.OPEN) return;
+
+        // Draw video frame to canvas
+        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+        
+        // Get Base64 JPEG (Quality 0.7)
+        const base64Jpeg = canvas.toDataURL('image/jpeg', 0.7);
+        
+        // Extract raw base64 payload
+        const rawBase64 = base64Jpeg.split(',')[1];
+        
+        buddySocket.send(JSON.stringify({
+            type: 'video_frame',
+            data: rawBase64
+        }));
+        
+    }, 1000 / FPS_TARGET);
+}
+
+function stopVideoStream() {
+    if (captureInterval) {
+        clearInterval(captureInterval);
+        captureInterval = null;
+    }
+    if (mediaStream) {
+        mediaStream.getTracks().forEach(track => track.stop());
+        mediaStream = null;
+    }
+    if (videoElement) {
+        videoElement.srcObject = null;
+        videoElement = null;
     }
 }
 
