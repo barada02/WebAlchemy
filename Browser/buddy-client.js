@@ -36,10 +36,47 @@ function connectBuddy() {
     buddySocket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         console.log('Buddy says:', data);
+        
         if (data.type === 'echo') {
             alert(`Buddy Echo: ${data.message}`);
+        } else if (data.type === 'agent_text') {
+            // Display What the AI says
+            console.log(`%c[AI Buddy]%c ${data.data}`, "color: #4CAF50; font-weight: bold", "color: inherit");
+            
+            // For MVP display, we'll prefix it in the chat input placeholder or a simple alert 
+            // Better to show in a custom div, but alert is fine for sanity check of Phase 3
+            // We'll use a small floating notification instead of alert to not block the thread
+            showNotification(data.data);
+        } else if (data.type === 'error') {
+            alert(`Buddy Error: ${data.message}`);
+            stopVideoStream();
         }
     };
+
+    // Helper to show a temporary notification on screen
+    function showNotification(text) {
+        let notif = document.getElementById('buddy-notification');
+        if (!notif) {
+            notif = document.createElement('div');
+            notif.id = 'buddy-notification';
+            notif.style.position = 'fixed';
+            notif.style.bottom = '10px';
+            notif.style.right = '10px';
+            notif.style.backgroundColor = '#333';
+            notif.style.color = '#fff';
+            notif.style.padding = '15px';
+            notif.style.borderRadius = '8px';
+            notif.style.zIndex = '9999';
+            notif.style.maxWidth = '300px';
+            notif.style.boxShadow = '0 4px 6px rgba(0,0,0,0.3)';
+            document.body.appendChild(notif);
+        }
+        notif.textContent = text;
+        
+        // Hide after 5 seconds
+        if (notif.timeoutId) clearTimeout(notif.timeoutId);
+        notif.timeoutId = setTimeout(() => { notif.remove(); }, 5000);
+    }
 
     buddySocket.onclose = () => {
         console.log('Disconnected from AI Buddy');
