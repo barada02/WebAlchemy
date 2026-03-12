@@ -26,8 +26,15 @@ async def handle_gemini_message(response, websocket):
                         "data": part.text
                     }))
                 elif part.inline_data:
-                    # Audio data will be processed here in Phase 4
-                    pass
+                    # Agent Audio received from Gemini (PCM bytes)
+                    # We base64 encode it and send it to Electron for playback
+                    audio_bytes = part.inline_data.data
+                    encoded_audio = base64.b64encode(audio_bytes).decode("utf-8")
+                    
+                    await websocket.send(json.dumps({
+                        "type": "agent_audio",
+                        "data": encoded_audio
+                    }))
     except Exception as e:
         print(f"Error handling Gemini response: {e}")
 
@@ -81,6 +88,19 @@ async def start_gemini_session(websocket):
                                     video=types.Blob(
                                         data=image_bytes,
                                         mime_type="image/jpeg"
+                                    )
+                                )
+                                
+                        # Handle User Audio (Microphone capture from Electron)
+                        elif data.get("type") == "user_audio":
+                            audio_data = data.get("data")
+                            if audio_data:
+                                # Send the 16kHz PCM audio to Gemini
+                                pcm_bytes = base64.b64decode(audio_data)
+                                await session.send_realtime_input(
+                                    audio=types.Blob(
+                                        data=pcm_bytes,
+                                        mime_type="audio/pcm;rate=16000"
                                     )
                                 )
                                 
