@@ -88,11 +88,14 @@ async function startVideoStream() {
         const { ipcRenderer } = require('electron');
         const sources = await ipcRenderer.invoke('get-desktop-sources');
         
-        // Pick the first screen source (or entire desktop)
-        const mainScreen = sources.find(s => s.name === 'Entire screen' || s.name === 'Screen 1') || sources[0];
+        // Find the window source for our Electron App. 
+        // We look for the source name containing 'WebAlchemy Browser' (from our index.html title)
+        // If not found, fallback to the first 'window' type source.
+        const appWindow = sources.find(s => s.name.includes('WebAlchemy Browser')) 
+                       || sources.find(s => s.id.startsWith('window:'));
 
-        if (!mainScreen) {
-            console.error("Could not find a screen source to capture.");
+        if (!appWindow) {
+            console.error("Could not find the browser window source to capture.");
             return;
         }
 
@@ -101,7 +104,7 @@ async function startVideoStream() {
             video: {
                 mandatory: {
                     chromeMediaSource: 'desktop',
-                    chromeMediaSourceId: mainScreen.id,
+                    chromeMediaSourceId: appWindow.id,
                     minWidth: 1280,
                     maxWidth: 1280,
                     minHeight: 720,
