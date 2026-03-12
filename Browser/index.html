@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <title>WebAlchemy Browser</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="buddy.css">
 </head>
 
 <body>
@@ -21,6 +22,14 @@
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
             </button>
+        </div>
+
+        <!-- AI Buddy Control Bar -->
+        <div id="ai-buddy-bar">
+            <button id="btn-connect-buddy">Connect AI Buddy</button>
+            <span id="buddy-status" class="status-disconnected">Disconnected</span>
+            <input type="text" id="buddy-chat-input" placeholder="Test message to backend..." disabled>
+            <button id="btn-send-buddy" disabled>Send</button>
         </div>
 
         <!-- Address Bar Section -->
@@ -61,6 +70,7 @@
         </div>
     </div>
     <script src="renderer.js"></script>
+    <script src="buddy-client.js"></script>
 </body>
 
 </html>
