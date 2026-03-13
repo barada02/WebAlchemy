@@ -115,6 +115,15 @@ async def gemini_session_handler(websocket):
             return_when=asyncio.FIRST_COMPLETED
         )
         
+        # Determine why it finished
+        for task in done:
+            try:
+                task.result()  # This will re-raise any exception that caused the task to fail
+            except websockets.exceptions.ConnectionClosed:
+                pass # Expected when client closes
+            except Exception as e:
+                print(f"Task failed with error: {e}")
+
         # Cleanup
         for t in pending:
             t.cancel()
@@ -123,9 +132,16 @@ async def gemini_session_handler(websocket):
 async def ws_handler(websocket):
     print("New websocket connection from Browser Client.")
     try:
-        await gemini_session_handler(websocket)
+        while True:
+            try:
+                await gemini_session_handler(websocket)
+            except websockets.exceptions.ConnectionClosed:
+                break
+            except Exception as e:
+                print(f"Gemini session dropped: {e}, reconnecting...")
+                await asyncio.sleep(1) # Add slight delay to prevent spamming reconnections on immediate failure
     except Exception as e:
-        print(f"Failed to handle gemini session: {e}")
+        print(f"Failed to handle gemini session top level: {e}")
 
 async def main():
     print("Starting WebSocket Server on ws://localhost:8000...")
