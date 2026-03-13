@@ -17,6 +17,7 @@ function connectBuddy() {
     
     // Connect to the local Python AgentService
     buddySocket = new WebSocket('ws://localhost:8000');
+    buddySocket.binaryType = 'arraybuffer'; // Setup for receiving binary Agent audio later
 
     buddySocket.onopen = async () => {
         console.log('Connected to AI Buddy (Python Backend)');
@@ -93,6 +94,10 @@ function connectBuddy() {
         buddyChatInput.disabled = true;
         btnSendBuddy.disabled = true;
         
+        // Hide mic indicator
+        const micIndicator = document.getElementById('mic-indicator');
+        if (micIndicator) micIndicator.style.display = 'none';
+
         // Stop streaming
         stopVideoStream();
         stopAudioStream();
@@ -123,7 +128,7 @@ function sendTestMessage() {
 let videoElement = null;
 let mediaStream = null;
 let captureInterval = null;
-const FPS_TARGET = 2; // Keep it low for MVP / testing
+const FPS_TARGET = 1; // Strict 1 FPS limit per Gemini API requirements
 
 async function startVideoStream() {
     try {
@@ -186,16 +191,20 @@ function startFrameCapture() {
         // Draw video frame to canvas
         ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
         
-        // Get Base64 JPEG (Quality reduced from 0.7 to 0.5 to reduce payload size)
-        const base64Jpeg = canvas.toDataURL('image/jpeg', 0.5);
-        
-        // Extract raw base64 payload
-        const rawBase64 = base64Jpeg.split(',')[1];
-        
-        buddySocket.send(JSON.stringify({
-            type: 'video_frame',
-            data: rawBase64
-        }));
+        // Send as pure binary (Blob -> ArrayBuffer)
+        canvas.toBlob((blob) => {
+            if (blob) {
+                blob.arrayBuffer().then((buffer) => {
+                    const uint8Data = new Uint8Array(buffer);
+                    const payload = new Uint8Array(uint8Data.byteLength + 1);
+                    payload[0] = 0; // Marker 0 for Video
+                    payload.set(uint8Data, 1);
+                    if (buddySocket && buddySocket.readyState === WebSocket.OPEN) {
+                        buddySocket.send(payload);
+                    }
+                });
+            }
+        }, 'image/jpeg', 0.5);
         
     }, 1000 / FPS_TARGET);
 }
@@ -258,18 +267,14 @@ async function startAudioStream() {
             // Ensure little-endian 
             const uint8Data = new Uint8Array(int16Buffer.buffer);
             
-            // Fast Base64 encoding
-            let binary = '';
-            for (let i = 0; i < uint8Data.byteLength; i++) {
-                binary += String.fromCharCode(uint8Data[i]);
+            // Fast Binary Sending
+            const payload = new Uint8Array(uint8Data.byteLength + 1);
+            payload[0] = 1; // Marker 1 for Audio
+            payload.set(uint8Data, 1);
+            
+            if (buddySocket && buddySocket.readyState === WebSocket.OPEN) {
+                buddySocket.send(payload);
             }
-            const base64Audio = window.btoa(binary);
-
-            // Send to Python
-            buddySocket.send(JSON.stringify({
-                type: 'user_audio',
-                data: base64Audio
-            }));
         };
 
         // Connect the nodes (Processor must connect to destination to work in Chrome, but we mute it)
@@ -281,6 +286,9 @@ async function startAudioStream() {
         await playbackContext.resume();
         nextPlaybackTime = playbackContext.currentTime;
         console.log("🎤 Audio capture and playback initialized.");
+        
+        const micIndicator = document.getElementById('mic-indicator');
+        if (micIndicator) micIndicator.style.display = 'inline-block';
 
     } catch (err) {
         console.error("Failed to start audio stream:", err);
