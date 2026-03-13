@@ -176,9 +176,9 @@ function startFrameCapture() {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
-    // Limit resolution to save bandwidth
-    canvas.width = 1280;
-    canvas.height = 720;
+    // Limit resolution to save bandwidth (Downscaled from 720p to 360p to prevent Gemini API keepalive timeouts)
+    canvas.width = 640;
+    canvas.height = 360;
 
     captureInterval = setInterval(() => {
         if (!videoElement || !buddySocket || buddySocket.readyState !== WebSocket.OPEN) return;
@@ -186,8 +186,8 @@ function startFrameCapture() {
         // Draw video frame to canvas
         ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
         
-        // Get Base64 JPEG (Quality 0.7)
-        const base64Jpeg = canvas.toDataURL('image/jpeg', 0.7);
+        // Get Base64 JPEG (Quality reduced from 0.7 to 0.5 to reduce payload size)
+        const base64Jpeg = canvas.toDataURL('image/jpeg', 0.5);
         
         // Extract raw base64 payload
         const rawBase64 = base64Jpeg.split(',')[1];

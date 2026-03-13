@@ -76,36 +76,45 @@ async def start_gemini_session(websocket):
                         # Handle Text Message (Chat from user)
                         if data.get("type") == "text":
                             print(f"User text: {data['data']}")
-                            await session.send_realtime_input(text=data["data"])
+                            try:
+                                await session.send_realtime_input(text=data["data"])
+                            except Exception as e:
+                                print(f"Error sending text to Gemini: {e}")
                         
                         # Handle Video Frames (Screen capture from Electron)
                         elif data.get("type") == "video_frame":
                             frame_data = data.get("data")
                             if frame_data:
-                                # Send the JPEG frame to Gemini
                                 image_bytes = base64.b64decode(frame_data)
-                                await session.send_realtime_input(
-                                    video=types.Blob(
-                                        data=image_bytes,
-                                        mime_type="image/jpeg"
+                                try:
+                                    await session.send_realtime_input(
+                                        video=types.Blob(
+                                            data=image_bytes,
+                                            mime_type="image/jpeg"
+                                        )
                                     )
-                                )
+                                except Exception as e:
+                                    print(f"Error sending video frame to Gemini: {e}")
                                 
                         # Handle User Audio (Microphone capture from Electron)
                         elif data.get("type") == "user_audio":
                             audio_data = data.get("data")
                             if audio_data:
-                                # Send the 16kHz PCM audio to Gemini
                                 pcm_bytes = base64.b64decode(audio_data)
-                                await session.send_realtime_input(
-                                    audio=types.Blob(
-                                        data=pcm_bytes,
-                                        mime_type="audio/pcm;rate=16000"
+                                try:
+                                    await session.send_realtime_input(
+                                        audio=types.Blob(
+                                            data=pcm_bytes,
+                                            mime_type="audio/pcm;rate=16000"
+                                        )
                                     )
-                                )
+                                except Exception as e:
+                                    print(f"Error sending audio frame to Gemini: {e}")
                                 
                     except json.JSONDecodeError:
                         print("Received non-JSON message from Electron.")
+                    except Exception as e:
+                        print(f"Unexpected inner loop error: {e}")
                         
             except websockets.exceptions.ConnectionClosed as e:
                 print(f"\nElectron client disconnected: {e}")
