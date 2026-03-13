@@ -1,8 +1,8 @@
 // AI Buddy Client Logic
 const btnConnectBuddy = document.getElementById('btn-connect-buddy');
 const buddyStatus = document.getElementById('buddy-status');
-const buddyChatInput = document.getElementById('buddy-chat-input');
-const btnSendBuddy = document.getElementById('btn-send-buddy');
+const aiTranscriptionBox = document.getElementById('ai-transcription-box');
+const aiMessageText = document.getElementById('ai-message-text');
 
 let buddySocket = null;
 
@@ -26,9 +26,9 @@ function connectBuddy() {
         btnConnectBuddy.textContent = 'Disconnect AI Buddy';
         btnConnectBuddy.style.background = '#f44336';
         
-        // Enable chat inputs for echo test
-        buddyChatInput.disabled = false;
-        btnSendBuddy.disabled = false;
+        // Show transcription box
+        aiTranscriptionBox.style.display = 'block';
+        aiMessageText.textContent = "Listening...";
 
         // Start streaming video immediately upon connection
         await startVideoStream();
@@ -38,50 +38,24 @@ function connectBuddy() {
         const data = JSON.parse(event.data);
         console.log('Buddy says:', data);
         
-        if (data.type === 'echo') {
-            alert(`Buddy Echo: ${data.message}`);
-        } else if (data.type === 'agent_text') {
-            // Display What the AI says
+        if (data.type === 'agent_text' || data.type === 'transcription') {
+            const prefix = data.role === 'user' ? 'You: ' : 'Buddy: ';
             console.log(`%c[AI Buddy]%c ${data.data}`, "color: #4CAF50; font-weight: bold", "color: inherit");
             
-            // For MVP display, we'll prefix it in the chat input placeholder or a simple alert 
-            // Better to show in a custom div, but alert is fine for sanity check of Phase 3
-            // We'll use a small floating notification instead of alert to not block the thread
-            showNotification(data.data);
+            // Reliable display
+            aiMessageText.textContent = prefix + data.data;
+            aiTranscriptionBox.style.display = 'block';
         } else if (data.type === 'agent_audio') {
             // Incoming PCM Audio from Gemini
             playAgentAudio(data.data);
+        } else if (data.type === 'clear_text') {
+            aiMessageText.textContent = "";
         } else if (data.type === 'error') {
-            alert(`Buddy Error: ${data.message}`);
+            aiMessageText.textContent = `Error: ${data.message}`;
             stopVideoStream();
             stopAudioStream();
         }
     };
-
-    // Helper to show a temporary notification on screen
-    function showNotification(text) {
-        let notif = document.getElementById('buddy-notification');
-        if (!notif) {
-            notif = document.createElement('div');
-            notif.id = 'buddy-notification';
-            notif.style.position = 'fixed';
-            notif.style.bottom = '10px';
-            notif.style.right = '10px';
-            notif.style.backgroundColor = '#333';
-            notif.style.color = '#fff';
-            notif.style.padding = '15px';
-            notif.style.borderRadius = '8px';
-            notif.style.zIndex = '9999';
-            notif.style.maxWidth = '300px';
-            notif.style.boxShadow = '0 4px 6px rgba(0,0,0,0.3)';
-            document.body.appendChild(notif);
-        }
-        notif.textContent = text;
-        
-        // Hide after 5 seconds
-        if (notif.timeoutId) clearTimeout(notif.timeoutId);
-        notif.timeoutId = setTimeout(() => { notif.remove(); }, 5000);
-    }
 
     buddySocket.onclose = () => {
         console.log('Disconnected from AI Buddy');
@@ -90,9 +64,8 @@ function connectBuddy() {
         btnConnectBuddy.textContent = 'Connect AI Buddy';
         btnConnectBuddy.style.background = '#4CAF50';
         
-        // Disable chat inputs
-        buddyChatInput.disabled = true;
-        btnSendBuddy.disabled = true;
+        aiTranscriptionBox.style.display = 'none';
+        aiMessageText.textContent = '';
         
         // Hide mic indicator
         const micIndicator = document.getElementById('mic-indicator');
@@ -111,16 +84,7 @@ function connectBuddy() {
     };
 }
 
-// Send Test Message
-function sendTestMessage() {
-    if (buddySocket && buddySocket.readyState === WebSocket.OPEN) {
-        const message = buddyChatInput.value;
-        if (message.trim() !== '') {
-            buddySocket.send(JSON.stringify({ type: 'text', data: message }));
-            buddyChatInput.value = '';
-        }
-    }
-}
+
 
 // -------------------------------------------------------------------
 // VIDEO STREAMING LOGIC
@@ -359,7 +323,3 @@ function playAgentAudio(base64PcmString) {
 
 // Event Listeners
 btnConnectBuddy.addEventListener('click', connectBuddy);
-btnSendBuddy.addEventListener('click', sendTestMessage);
-buddyChatInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') sendTestMessage();
-});
