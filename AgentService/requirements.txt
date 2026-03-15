@@ -1,4 +1,0 @@
-websockets==14.0
-asyncio
-python-dotenv
-google-genai

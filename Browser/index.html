@@ -26,10 +26,16 @@
 
         <!-- AI Buddy Control Bar -->
         <div id="ai-buddy-bar">
-            <button id="btn-connect-buddy">Connect AI Buddy</button>
+            <button id="btn-connect-buddy">Start Live Buddy</button>
             <span id="buddy-status" class="status-disconnected">Disconnected</span>
-            <input type="text" id="buddy-chat-input" placeholder="Test message to backend..." disabled>
+            <span id="mic-indicator"></span>
+            <input type="text" id="buddy-chat-input" placeholder="Type to your buddy..." disabled>
             <button id="btn-send-buddy" disabled>Send</button>
+        </div>
+        
+        <!-- Live AI Transcription Box (Reliable response UI) -->
+        <div id="ai-transcription-box" style="display: none;">
+            <div id="ai-message-text"></div>
         </div>
 
         <!-- Address Bar Section -->
