@@ -17,6 +17,7 @@ from google.adk.agents.run_config import RunConfig, StreamingMode
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
+from google.genai.errors import APIError
 
 # Load environment variables from .env file BEFORE importing agent
 load_dotenv(Path(__file__).parent / ".env")
@@ -318,15 +319,28 @@ async def websocket_endpoint(
         logger.debug(
             f"Starting run_live with user_id={user_id}, " f"session_id={session_id}"
         )
-        async for event in runner.run_live(
-            user_id=user_id,
-            session_id=session_id,
-            live_request_queue=live_request_queue,
-            run_config=run_config,
-        ):
-            event_json = event.model_dump_json(exclude_none=True, by_alias=True)
-            logger.debug(f"[SERVER] Event: {event_json}")
-            await websocket.send_text(event_json)
+        try:
+            async for event in runner.run_live(
+                user_id=user_id,
+                session_id=session_id,
+                live_request_queue=live_request_queue,
+                run_config=run_config,
+            ):
+                event_json = event.model_dump_json(exclude_none=True, by_alias=True)
+                logger.debug(f"[SERVER] Event: {event_json}")
+                await websocket.send_text(event_json)
+        except APIError as api_error:
+            message = "Live API error. Please check and rotate your GOOGLE_API_KEY."
+            logger.error(f"Live API error in downstream task: {api_error}")
+            await websocket.send_text(
+                json.dumps(
+                    {
+                        "type": "error",
+                        "message": message,
+                        "provider_status": getattr(api_error, "status_code", None),
+                    }
+                )
+            )
         logger.debug("run_live() generator completed")
 
     # Run both tasks concurrently
