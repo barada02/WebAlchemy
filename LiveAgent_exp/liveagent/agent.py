@@ -17,7 +17,7 @@ if hasattr(mouse_tool, "declaration"):
 agent = Agent(
     name="liveagent",
     model=os.getenv(
-        "DEMO_AGENT_MODEL", "gemini-2.5-flash-native-audio-preview-12-2025"
+        "DEMO_AGENT_MODEL", "gemini-2.5-flash-native-audio-preview-09-2025"
     ),
     tools=[mouse_tool],
     instruction="""You are my helpful Browser Copilot and friend. We are working together to navigate my screen focused on safe UI interaction. 
