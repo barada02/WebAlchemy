@@ -6,6 +6,7 @@ import json
 import logging
 import time
 import warnings
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -27,11 +28,25 @@ load_dotenv(Path(__file__).parent / ".env")
 from liveagent.agent import agent  # noqa: E402
 
 # Configure logging
+log_dir = Path(__file__).parent / "logs"
+log_dir.mkdir(parents=True, exist_ok=True)
+log_file = log_dir / "liveagent_backend.log"
+
 logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler(),
+        RotatingFileHandler(
+            filename=log_file,
+            maxBytes=5 * 1024 * 1024,
+            backupCount=3,
+            encoding="utf-8",
+        ),
+    ],
 )
 logger = logging.getLogger(__name__)
+logger.info("Backend logging to file: %s", log_file)
 
 # Suppress Pydantic serialization warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
@@ -331,7 +346,7 @@ async def websocket_endpoint(
                 await websocket.send_text(event_json)
         except APIError as api_error:
             message = "Live API error. Please check and rotate your GOOGLE_API_KEY."
-            logger.error(f"Live API error in downstream task: {api_error}")
+            logger.error("Live API error in downstream task: %s", api_error, exc_info=True)
             await websocket.send_text(
                 json.dumps(
                     {

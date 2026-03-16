@@ -6,13 +6,20 @@ from google.adk.agents import Agent
 from google.adk.tools.function_tool import FunctionTool
 from .mouse_tools import move_mouse_and_click
 
+# 1. Wrap the function explicitly in ADK's FunctionTool
+mouse_tool = FunctionTool(func=move_mouse_and_click)
+
+# 2. Inject the NON_BLOCKING behavior into the generated schema
+# (This tells the Google server not to lock the WebSocket stream)
+if hasattr(mouse_tool, "declaration"):
+    mouse_tool.declaration.behavior = "NON_BLOCKING"
 
 agent = Agent(
     name="liveagent",
     model=os.getenv(
         "DEMO_AGENT_MODEL", "gemini-2.5-flash-native-audio-preview-12-2025"
     ),
-    tools=[FunctionTool(move_mouse_and_click)],
+    tools=[mouse_tool],
     instruction="""You are my helpful Browser Copilot and friend. We are working together to navigate my screen focused on safe UI interaction. 
     
     CRITICAL RULES FOR MOUSE MOVEMENT:

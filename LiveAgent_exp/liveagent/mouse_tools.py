@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 
-def move_mouse_and_click(
+
+async def move_mouse_and_click(
     x: int,
     y: int,
     click: bool = True,
@@ -26,6 +28,7 @@ def move_mouse_and_click(
         return {
             "ok": False,
             "error": "Invalid button. Use left, right, or middle.",
+            "scheduling": "INTERRUPT",
         }
 
     try:
@@ -35,26 +38,32 @@ def move_mouse_and_click(
             "ok": False,
             "error": "pyautogui is not installed.",
             "hint": "Install with: pip install pyautogui",
+            "scheduling": "INTERRUPT",
         }
 
-    try:
-        pyautogui.moveTo(x, y, duration=max(0.0, duration_seconds))
-        action = "moved"
+    def _perform_mouse_action() -> dict:
+        try:
+            pyautogui.moveTo(x, y, duration=max(0.0, duration_seconds))
+            action = "moved"
 
-        if click:
-            pyautogui.click(x=x, y=y, button=button)
-            action = f"clicked_{button}"
+            if click:
+                pyautogui.click(x=x, y=y, button=button)
+                action = f"clicked_{button}"
 
-        return {
-            "ok": True,
-            "action": action,
-            "x": x,
-            "y": y,
-            "click": click,
-            "button": button,
-        }
-    except Exception as exc:
-        return {
-            "ok": False,
-            "error": str(exc),
-        }
+            return {
+                "ok": True,
+                "action": action,
+                "x": x,
+                "y": y,
+                "click": click,
+                "button": button,
+                "scheduling": "INTERRUPT",
+            }
+        except Exception as exc:
+            return {
+                "ok": False,
+                "error": str(exc),
+                "scheduling": "INTERRUPT",
+            }
+
+    return await asyncio.to_thread(_perform_mouse_action)
