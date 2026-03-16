@@ -3,7 +3,7 @@
 import os
 
 from google.adk.agents import Agent
-
+from google.adk.tools.function_tool import FunctionTool
 from .mouse_tools import move_mouse_and_click
 
 
@@ -12,7 +12,7 @@ agent = Agent(
     model=os.getenv(
         "DEMO_AGENT_MODEL", "gemini-2.5-flash-native-audio-preview-12-2025"
     ),
-    tools=[move_mouse_and_click],
+    tools=[FunctionTool(move_mouse_and_click)],
     instruction="""You are my helpful Browser Copilot and friend. We are working together to navigate my screen focused on safe UI interaction. 
     
     CRITICAL RULES FOR MOUSE MOVEMENT:
