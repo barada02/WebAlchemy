@@ -5,41 +5,78 @@
     <meta charset="UTF-8">
     <title>WebAlchemy Browser</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="buddy.css">
 </head>
 
 <body>
-    <div id="browser-chrome">
-        <div id="nav-controls">
-            <button id="btn-back" title="Go Back">
+    <div id="browser-window">
+        <!-- New Tab Bar Section -->
+        <div id="tabs-bar">
+            <div id="tabs-container">
+                <!-- Tabs will be dynamically inserted here -->
+            </div>
+            <button id="btn-new-tab" title="New Tab">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                     stroke-linejoin="round">
-                    <line x1="19" y1="12" x2="5" y2="12"></line>
-                    <polyline points="12 19 5 12 12 5"></polyline>
-                </svg>
-            </button>
-            <button id="btn-forward" title="Go Forward">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                    stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
                     <line x1="5" y1="12" x2="19" y2="12"></line>
-                    <polyline points="12 5 19 12 12 19"></polyline>
-                </svg>
-            </button>
-            <button id="btn-reload" title="Reload">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                    stroke-linejoin="round">
-                    <polyline points="23 4 23 10 17 10"></polyline>
-                    <polyline points="1 20 1 14 7 14"></polyline>
-                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
                 </svg>
             </button>
         </div>
-        <div id="address-bar-container">
-            <input type="text" id="url-input" placeholder="Enter a URL (e.g., https://google.com)" spellcheck="false"
-                autocomplete="off">
+
+        <!-- AI Buddy Control Bar -->
+        <div id="ai-buddy-bar">
+            <button id="btn-connect-buddy">Start Live Buddy</button>
+            <span id="buddy-status" class="status-disconnected">Disconnected</span>
+            <span id="mic-indicator"></span>
+            <input type="text" id="buddy-chat-input" placeholder="Type to your buddy..." disabled>
+            <button id="btn-send-buddy" disabled>Send</button>
+        </div>
+        
+        <!-- Live AI Transcription Box (Reliable response UI) -->
+        <div id="ai-transcription-box" style="display: none;">
+            <div id="ai-message-text"></div>
+        </div>
+
+        <!-- Address Bar Section -->
+        <div id="browser-chrome">
+            <div id="nav-controls">
+                <button id="btn-back" title="Go Back">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                </button>
+                <button id="btn-forward" title="Go Forward">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </button>
+                <button id="btn-reload" title="Reload">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <polyline points="1 20 1 14 7 14"></polyline>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="address-bar-container">
+                <input type="text" id="url-input" placeholder="Search or enter web address" spellcheck="false"
+                    autocomplete="off">
+            </div>
+        </div>
+
+        <!-- Webviews Container (Replaces static webview) -->
+        <div id="webviews-container">
+            <!-- Dynamic webviews will be inserted here -->
         </div>
     </div>
-    <webview id="webview" src="https://google.com" allowpopups></webview>
     <script src="renderer.js"></script>
+    <script src="buddy-client.js"></script>
 </body>
 
 </html>

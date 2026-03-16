@@ -4,15 +4,140 @@
 
 body {
     font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    margin: 0;
+    background-color: #11111b;
+    /* darker background for the window frame */
+    color: #cdd6f4;
+    overflow: hidden;
+}
+
+#browser-window {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    margin: 0;
+}
+
+/* Tabs Bar */
+#tabs-bar {
+    display: flex;
+    align-items: center;
+    background-color: #11111b;
+    /* Darkest area */
+    padding: 8px 8px 0 8px;
+    /* Padding for visual separation */
+    height: 40px;
+}
+
+#tabs-container {
+    display: flex;
+    gap: 4px;
+    flex-grow: 1;
+    overflow-x: auto;
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+#tabs-container::-webkit-scrollbar {
+    display: none;
+    /* Chrome */
+}
+
+.tab {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 150px;
+    max-width: 240px;
+    height: 32px;
+    background-color: #181825;
+    color: #bac2de;
+    border-radius: 8px 8px 0 0;
+    padding: 0 12px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-bottom: none;
+    transition: background-color 0.2s, color 0.2s;
+    user-select: none;
+}
+
+.tab:hover {
+    background-color: #313244;
+}
+
+.tab.active {
     background-color: #1e1e2e;
-    /* Sleek dark mode background for chrome */
-    color: #cdd6f4;
+    color: #89b4fa;
+    border-color: #313244;
+    position: relative;
+    z-index: 10;
+}
+
+/* Tab text truncation */
+.tab-title {
+    font-size: 13px;
+    white-space: nowrap;
     overflow: hidden;
-    /* Prevent body scroll, let webview scroll */
+    text-overflow: ellipsis;
+    flex-grow: 1;
+    margin-right: 8px;
+    pointer-events: none;
+    /* Let parent handle clicks */
+}
+
+/* Close button inside tab */
+.btn-close-tab {
+    background: transparent;
+    border: none;
+    color: #a6adc8;
+    cursor: pointer;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin-right: -4px;
+    /* Align nicer to the right edge */
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.btn-close-tab:hover {
+    background-color: #f38ba8;
+    /* Red on hover */
+    color: #11111b;
+}
+
+.btn-close-tab svg {
+    width: 14px;
+    height: 14px;
+    pointer-events: none;
+}
+
+/* New Tab Button */
+#btn-new-tab {
+    background: transparent;
+    border: none;
+    color: #cdd6f4;
+    cursor: pointer;
+    border-radius: 6px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 8px;
+    margin-right: 8px;
+    transition: background-color 0.2s;
+}
+
+#btn-new-tab:hover {
+    background-color: #313244;
+}
+
+#btn-new-tab svg {
+    width: 18px;
+    height: 18px;
 }
 
 /* Browser Navigation Bar (Chrome) */
@@ -20,9 +145,12 @@ body {
     display: flex;
     align-items: center;
     padding: 8px 16px;
-    background-color: #181825;
+    background-color: #1e1e2e;
+    /* Match active tab color */
     border-bottom: 1px solid #313244;
-    height: 56px;
+    position: relative;
+    z-index: 5;
+    height: 50px;
     gap: 12px;
 }
 
@@ -58,6 +186,15 @@ body {
     height: 20px;
 }
 
+#nav-controls button:disabled {
+    color: #45475a;
+    cursor: default;
+}
+
+#nav-controls button:disabled:hover {
+    background-color: transparent;
+}
+
 /* Address Bar */
 #address-bar-container {
     flex-grow: 1;
@@ -66,10 +203,10 @@ body {
 
 #url-input {
     width: 100%;
-    padding: 10px 16px;
+    padding: 8px 16px;
     border-radius: 20px;
-    border: 1px solid #45475a;
-    background-color: #11111b;
+    border: 1px solid #313244;
+    background-color: #181825;
     color: #cdd6f4;
     font-size: 14px;
     outline: none;
@@ -82,13 +219,26 @@ body {
     box-shadow: 0 0 0 3px rgba(137, 180, 250, 0.2);
 }
 
-/* Webview Container */
-#webview {
+/* Webviews Container */
+#webviews-container {
     flex-grow: 1;
-    display: flex;
-    width: 100%;
-    height: calc(100vh - 56px);
-    /* subtract chrome height */
+    position: relative;
     background-color: #ffffff;
     /* Default background for web pages */
+}
+
+/* Individual Webviews */
+webview {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    /* Hidden by default */
+}
+
+webview.active {
+    display: flex;
+    /* Only active webview is shown */
 }
