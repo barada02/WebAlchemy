@@ -240,7 +240,17 @@ async def websocket_endpoint(
 
         while True:
             # Receive message from WebSocket (text or binary)
-            message = await websocket.receive()
+            try:
+                message = await websocket.receive()
+            except RuntimeError as runtime_error:
+                if "disconnect message" in str(runtime_error).lower():
+                    logger.debug("Upstream receive loop ended after client disconnect")
+                    break
+                raise
+
+            if message.get("type") == "websocket.disconnect":
+                logger.debug("Upstream received websocket.disconnect; ending loop")
+                break
 
             # Handle binary frames (typed binary protocol or legacy audio)
             if "bytes" in message:
@@ -345,17 +355,35 @@ async def websocket_endpoint(
                 logger.debug(f"[SERVER] Event: {event_json}")
                 await websocket.send_text(event_json)
         except APIError as api_error:
+            status_code = getattr(api_error, "status_code", None)
+            api_error_text = str(api_error)
+
+            if status_code == 1000 or "1000" in api_error_text:
+                logger.debug(
+                    "Live API stream closed normally (code 1000): %s", api_error_text
+                )
+                return
+
             message = "Live API error. Please check and rotate your GOOGLE_API_KEY."
             logger.error("Live API error in downstream task: %s", api_error, exc_info=True)
-            await websocket.send_text(
-                json.dumps(
-                    {
-                        "type": "error",
-                        "message": message,
-                        "provider_status": getattr(api_error, "status_code", None),
-                    }
+
+            try:
+                await websocket.send_text(
+                    json.dumps(
+                        {
+                            "type": "error",
+                            "message": message,
+                            "provider_status": status_code,
+                        }
+                    )
                 )
-            )
+            except RuntimeError as runtime_error:
+                if "disconnect message" in str(runtime_error).lower():
+                    logger.debug(
+                        "Skipping error message send because websocket already disconnected"
+                    )
+                else:
+                    raise
         logger.debug("run_live() generator completed")
 
     # Run both tasks concurrently
@@ -367,7 +395,13 @@ async def websocket_endpoint(
     except WebSocketDisconnect:
         logger.debug("Client disconnected normally")
     except Exception as e:
-        logger.error(f"Unexpected error in streaming tasks: {e}", exc_info=True)
+        if (
+            isinstance(e, RuntimeError)
+            and "disconnect message" in str(e).lower()
+        ):
+            logger.debug("Streaming tasks ended after client disconnect")
+        else:
+            logger.error(f"Unexpected error in streaming tasks: {e}", exc_info=True)
     finally:
         # ========================================
         # Phase 4: Session Termination
